@@ -12,7 +12,7 @@ from larray.tests.common import (
     assert_nparray_equal, assert_nparray_nan_equal,
     needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl,
     needs_matplotlib,
-    NUMPY2,
+    NUMPY2, NUMPY24,
     must_warn, must_raise
 )
 from larray import (
@@ -3846,6 +3846,16 @@ def test_hdf_roundtrip(tmp_path, meta):
     from larray.core.session import Session
     s = Session(fpath)
     assert s.names == sorted(['a0', 'a1', 'a2', 'a3', 'c0,c2', 'c0::2', 'even', ':name?with*special__[characters]'])
+
+    # test reading a file created by an older version
+    fpath = inputpath('test_session.h5')
+    msg = (f"'{fpath}' was created with an old version of NumPy. Please "
+           "rewrite the file with a recent version of NumPy to avoid future "
+           "compatibility issues.")
+    # if we do not use numpy >= 2.4, the warning is not triggered
+    num_expected = int(NUMPY24)
+    with must_warn(FutureWarning, msg=msg, num_expected=num_expected):
+        _ = read_hdf(fpath, '__groups__/a01')
 
 
 def test_from_string():

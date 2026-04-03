@@ -16,10 +16,14 @@ from itertools import product
 from collections import defaultdict
 
 import numpy as np
+from numpy.exceptions import VisibleDeprecationWarning
 import pandas as pd
 
 from larray.util.types import R
 from typing import Callable
+
+PICKLE_NP_DTYPE_WARNING_PATTERN = r'dtype\(\): align .*'
+PICKLE_NP_DTYPE_WARNING_RE = re.compile(PICKLE_NP_DTYPE_WARNING_PATTERN)
 
 try:
     np.set_printoptions(legacy='1.13')
@@ -799,6 +803,56 @@ def common_dtype(arrays) -> np.dtype:
     return np_array_common_dtype(arrays)
 
 
+class PickleDtypeWarningRewriter:
+    """
+    Context manager to rewrite warnings about old pickled numpy dtypes.
+
+    When reading from an HDF file, pandas may emit warnings about old pickled
+    numpy dtypes. This context manager catches these warnings and rewrites them
+    as FutureWarnings with a more user-friendly message.
+    """
+    def __init__(self, filepath, stacklevel):
+        self.filepath = filepath
+        self.stacklevel = stacklevel
+        self.warnings_catcher = None
+        self.caught_warnings = None
+
+    def __enter__(self):
+        warnings_catcher = warnings.catch_warnings(record=True)
+        self.warnings_catcher = warnings_catcher
+        self.caught_warnings = warnings_catcher.__enter__()
+        # do not use "always" to avoid showing the warning multiple times for
+        # the same file if it contains multiple pickled dtypes
+        warnings.filterwarnings('once',
+                                message=PICKLE_NP_DTYPE_WARNING_PATTERN,
+                                category=VisibleDeprecationWarning,
+                                module='pandas')
+        return None
+
+    def __exit__(self, type_, value, traceback):
+        # exit catch_warnings context manager (to restore normal showwarning)
+        self.warnings_catcher.__exit__(type_, value, traceback)
+        for warning in self.caught_warnings:
+            msg = warning.message
+            # We still need to check the warning message because other
+            # types of warnings are not (and should not be) filtered
+            if (isinstance(msg, VisibleDeprecationWarning) and
+                    PICKLE_NP_DTYPE_WARNING_RE.match(str(msg))):
+                fpath = self.filepath
+                warnings.warn(
+                    f"'{fpath}' was created with an old version of "
+                    "NumPy. Please rewrite the file with a recent "
+                    "version of NumPy to avoid future compatibility "
+                    "issues.",
+                    FutureWarning, stacklevel=self.stacklevel
+                )
+            else:
+                # Otherwise, we should re-emit the warning as-is.
+                # In practice, the stack frame of the warning is lost when
+                # we catch it, but we keep the same message and category
+                warnings.warn(warning.message, warning.category)
+
+
 class LHDFStore:
     """Context manager for pandas HDFStore."""
 
@@ -808,16 +862,26 @@ class LHDFStore:
                 raise IOError('The HDFStore must be open for reading.')
             self.store = filepath_or_buffer
             self.close_store = False
+            # if the store is already open, the warning catcher should already
+            # be in place
+            warn_catcher = None
         else:
             self.store = pd.HDFStore(filepath_or_buffer, **kwargs)
             self.close_store = True
+            warn_catcher = PickleDtypeWarningRewriter(str(filepath_or_buffer),
+                                                      stacklevel=4)
+        self.warnings_catcher = warn_catcher
 
     def __enter__(self):
+        if self.warnings_catcher is not None:
+            self.warnings_catcher.__enter__()
         return self.store
 
     def __exit__(self, type_, value, traceback):
         if self.close_store:
             self.store.close()
+        if self.warnings_catcher is not None:
+            self.warnings_catcher.__exit__(type_, value, traceback)
 
 
 class SequenceZip:

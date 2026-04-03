@@ -11,7 +11,7 @@ from larray.core.axis import Axis
 from larray.core.constants import nan
 from larray.core.group import Group, LGroup, _translate_group_key_hdf
 from larray.core.metadata import Metadata
-from larray.util.misc import LHDFStore
+from larray.util.misc import LHDFStore, PickleDtypeWarningRewriter
 from larray.util.types import Scalar
 from larray.inout.session import register_file_handler
 from larray.inout.common import FileHandler, _supported_typenames, _supported_scalars_types
@@ -138,9 +138,14 @@ class PandasHDFHandler(FileHandler):
     r"""
     Handler for HDF5 files using Pandas.
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.warn_catcher = None
 
     def _open_for_read(self):
         self.handle = HDFStore(self.fname, mode='r')
+        self.warn_catcher = PickleDtypeWarningRewriter(self.fname, stacklevel=6)
+        self.warn_catcher.__enter__()
 
     def _open_for_write(self):
         self.handle = HDFStore(self.fname)
@@ -197,3 +202,5 @@ class PandasHDFHandler(FileHandler):
 
     def close(self):
         self.handle.close()
+        if self.warn_catcher is not None:
+            self.warn_catcher.__exit__(None, None, None)

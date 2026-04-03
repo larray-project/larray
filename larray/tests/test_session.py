@@ -11,7 +11,8 @@ from larray.tests.common import (
     meta, inputpath,
     assert_larray_equal, assert_array_nan_equal, assert_larray_nan_equal,
     needs_xlwings, needs_pytables, needs_openpyxl,
-    must_warn, must_raise
+    must_warn, must_raise,
+    NUMPY24
 )
 from larray.inout.common import _supported_scalars_types
 from larray import (Session, Axis, Array, Group, CheckedSession,
@@ -91,7 +92,14 @@ def test_init_session_xlsx():
 
 @needs_pytables
 def test_init_session_hdf():
-    s = Session(inputpath('test_session.h5'))
+    fpath = inputpath('test_session.h5')
+    msg = (f"'{fpath}' was created with an old version of NumPy. Please "
+           "rewrite the file with a recent version of NumPy to avoid future "
+           "compatibility issues.")
+    # if we do not use numpy >= 2.4, the warning is not triggered
+    num_expected = int(NUMPY24)
+    with must_warn(FutureWarning, msg=msg, num_expected=num_expected):
+        s = Session(fpath)
     assert list(s.keys()) == ['e', 'f', 'g', 'h', 'a', 'a2', 'anonymous', 'b', 'a01', 'ano01', 'b024']
 
 

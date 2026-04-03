@@ -12,7 +12,7 @@ from larray import (CheckedSession, CheckedArray, Axis, AxisCollection, Group, A
                     ndtest, full, full_like, zeros_like, ones, ones_like, isnan)
 from larray.tests.common import (inputpath, assert_array_nan_equal, meta,                           # noqa: F401
                                  needs_pytables, needs_openpyxl, needs_xlwings,
-                                 must_warn, must_raise)
+                                 must_warn, must_raise, NUMPY24)
 from larray.tests.test_session import (a, a2, a3, anonymous, a01, ano01, b, b2, b024,               # noqa: F401
                                        c, d, e, f, g, h,
                                        assert_seq_equal, session, test_getitem, test_getattr,
@@ -155,7 +155,18 @@ def test_create_checkedsession_instance(meta):
 
 @needs_pytables
 def test_init_checkedsession_hdf():
-    cs = CheckedSessionExample(inputpath('test_session.h5'))
+    fpath = inputpath('test_session.h5')
+    msg = (f"'{fpath}' was created with an old version of NumPy. Please "
+           "rewrite the file with a recent version of NumPy to avoid future "
+           "compatibility issues.")
+
+    # check_file is False because the warning stack level is calibrated for
+    # Session and not CheckedSession which uses a Session
+    # if we do not use numpy >= 2.4, the warning is not triggered
+    num_expected = int(NUMPY24)
+    with must_warn(FutureWarning, msg=msg, check_file=False,
+                   num_expected=num_expected):
+        cs = CheckedSessionExample(fpath)
     assert set(cs.keys()) == {'b', 'b024', 'a', 'a2', 'anonymous', 'a01', 'ano01', 'c', 'd', 'e', 'g', 'f', 'h'}
 
 
