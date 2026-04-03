@@ -137,22 +137,24 @@ class FileHandler:
             Dictionary containing the loaded objects.
         """
         self._open_for_read()
-        metadata = self._read_metadata()
-        item_types = self.item_types()
-        if keys is not None:
-            item_types = {key: type_ for key, type_ in item_types.items() if key in keys}
-        res = {}
-        for key, type_ in item_types.items():
-            if display:
-                print("loading", type_, "object", key, "...", end=' ')
-            try:
-                res[key] = self._read_item(key, type_, *args, **kwargs)
-            except Exception:
-                if not ignore_exceptions:
-                    raise
-            if display:
-                print("done")
-        self.close()
+        try:
+            metadata = self._read_metadata()
+            item_types = self.item_types()
+            if keys is not None:
+                item_types = {key: type_ for key, type_ in item_types.items() if key in keys}
+            res = {}
+            for key, type_ in item_types.items():
+                if display:
+                    print("loading", type_, "object", key, "...", end=' ')
+                try:
+                    res[key] = self._read_item(key, type_, *args, **kwargs)
+                except Exception:
+                    if not ignore_exceptions:
+                        raise
+                if display:
+                    print("done")
+        finally:
+            self.close()
         return metadata, res
 
     def dump(self, metadata, values, *args, display=False, **kwargs):
