@@ -39,27 +39,51 @@ def parse(s):
         return s
 
 
-def index_to_labels(idx, sort=True): # -> list[np.ndarray]:
+def simple_index_to_labels(idx: pd.Index, sort=True, keep_object=True) -> np.ndarray:
+    r"""
+    Return unique labels for a simple index as a numpy array
+
+    keep_object is an option which shouldn't exist (it should be always True)
+    It is a bug to use keep_object=False, but I introduced the option on purpose
+    to avoid breaking our users existing code in a bug-fix release (see #1193).
+    """
+    if sort:
+        dtype = 'O' if keep_object and idx.dtype.kind == 'O' else None
+        # this will fail for mixed-type labels (as does np.sort(idx.to_numpy()))
+        labels = np.asarray(sorted(idx.to_list()), dtype=dtype)
+    else:
+        if keep_object:
+            # this is NOT the same as idx.to_numpy() (which we should always
+            # use) because it converts mixed str-numbers object indexes to a
+            # single str type.
+            labels = idx.to_numpy()
+        else:
+            labels = np.asarray(idx.to_list())
+    return labels
+
+
+def index_to_labels(idx, sort=True, keep_object=True): # -> list[np.ndarray]:
     r"""
     Return unique labels for each dimension as a list of numpy arrays
+
+    keep_object means that object dtype indexes will be returned as object
+    dtype arrays, even if they contain only strings or numbers (see #1193).
     """
     if isinstance(idx, pd.MultiIndex):
         if sort:
-            return [level.to_numpy() for level in idx.levels]
+            # idx.levels is a FrozenList of Index objects (which are already
+            # sorted)
+            return [simple_index_to_labels(idx_for_level, sort=False,
+                                           keep_object=keep_object)
+                    for idx_for_level in idx.levels]
         else:
             # requires Pandas >= 0.23 (and it does NOT sort the values)
-            return [idx.unique(level_num).to_numpy()
+            return [simple_index_to_labels(idx.unique(level_num), sort=False,
+                                           keep_object=keep_object)
                     for level_num in range(idx.nlevels)]
     else:
         assert isinstance(idx, pd.Index)
-        if sort:
-            # TODO: we should probably only pass via Python when the dtype is
-            #       object
-            # For object arrays, it is often faster to sort the labels
-            # in Python than to use np.sort, which is very slow in that case
-            return [np.asarray(sorted(idx.to_list()))]
-        else:
-            return [idx.to_numpy()]
+        return [simple_index_to_labels(idx, sort=sort, keep_object=keep_object)]
 
 
 def product_index(idx, sort=False):
@@ -330,8 +354,11 @@ def from_frame(df,
         if sort_rows or sort_columns:
             raise ValueError('sort_rows and sort_columns cannot not be used when cartesian_prod is set to False. '
                              'Please call the method sort_labels on the returned array to sort rows or columns')
-        index_labels = index_to_labels(df.index, sort=False)
-        column_labels = index_to_labels(df.columns, sort=False)
+        # keep_object=False is an intentional bug to avoid breaking backwards
+        # compatibility (see issue #1193)
+        index_labels = index_to_labels(df.index, sort=False, keep_object=False)
+        column_labels = index_to_labels(df.columns, sort=False,
+                                        keep_object=False)
         axes_labels = index_labels + column_labels
 
     # Pandas treats column labels as column names (strings) so we need to convert them to values

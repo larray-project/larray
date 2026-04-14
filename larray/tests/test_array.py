@@ -4852,6 +4852,17 @@ def test_from_frame():
     assert_larray_equal(res, expected)
     assert res.data.flags.writeable
 
+    # test that mixed-type (str-number) multi index come out as a mixed type
+    # labels axis (see issue #1193)
+    df = pd.DataFrame([['s0', 'a', 0], ['s0', 1, 1]],
+                      columns=['str', 'obj', 'value']).set_index(['str', 'obj'])
+    res = from_frame(df)
+    expected_axes = [Axis('str=s0'),
+                     Axis(np.array(['a', 1], dtype=object), 'obj'),
+                     Axis(['value'])]
+    expected = Array([[[0], [1]]], expected_axes)
+    assert_larray_equal(res, expected)
+
 
 def test_asarray():
     series = pd.Series([0, 1, 2], ['a0', 'a1', 'a2'], name='a')
