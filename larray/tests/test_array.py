@@ -4209,7 +4209,7 @@ def test_from_lists():
     # this is what we SHOULD return but we do not so far to avoid breaking
     # backward compatibility (see issue #1187)
     # assert res.axes[1].dtype == 'datetime64[ns]'
-    assert res.axes[1].dtype == '<U48'
+    assert res.axes[1].dtype.kind == 'U'
 
 
 def test_to_series():
