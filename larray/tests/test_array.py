@@ -4134,6 +4134,8 @@ def test_read_excel_pandas():
 
 
 def test_from_lists():
+    from datetime import datetime
+
     expected = ndtest((2, 2, 3))
 
     # simple
@@ -4199,6 +4201,15 @@ def test_from_lists():
                              ['c1', 'BE', 0, 0, 1],
                              ['c1', 'FO', 0, 0, 2]], sort_columns=True)
     assert_larray_equal(sorted_arr, expected)
+
+    # with datetime labels
+    res = from_lists([['str', 'date', 'value'],
+                      ['abc', datetime.now(), 1]],
+                     nb_axes=3)
+    # this is what we SHOULD return but we do not so far to avoid breaking
+    # backward compatibility (see issue #1187)
+    # assert res.axes[1].dtype == 'datetime64[ns]'
+    assert res.axes[1].dtype == '<U48'
 
 
 def test_to_series():
