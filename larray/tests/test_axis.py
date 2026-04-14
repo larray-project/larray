@@ -122,11 +122,7 @@ def test_getitem():
 
 
 def test_index():
-    # an axis with labels having the object dtype
-    a = Axis(np.array(["a0", "a1"], dtype=object), 'a')
-    assert a.index('a1') == 1
-    assert a.index('a1 >> A1') == 1
-
+    # a normal axis
     time = Axis([2007, 2009], 'time')
     res = time.index(time.i[1])
     assert res == 1
@@ -136,6 +132,19 @@ def test_index():
 
     res = time.index('time.i[1]')
     assert res == 1
+
+    # an axis with labels having the object dtype (but homogeneous types)
+    a = Axis(np.array(["a0", "a1"], dtype=object), 'a')
+    assert a.index('a1') == 1
+    assert a.index('a1 >> A1') == 1
+
+    # an axis with labels having the object dtype and mixed types
+    a = Axis(np.array(["a0", 1], dtype=object), 'a')
+    assert a.index('a0') == 0
+    assert a.index(['a0']) == [0]
+    assert a.index(1) == 1
+    # issue #1194
+    assert a.index(np.array(['a0'])) == [0]
 
 
 def test_astype():
