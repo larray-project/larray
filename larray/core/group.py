@@ -383,7 +383,7 @@ def _to_tick(v) -> Scalar:
         return str(v)
 
 
-def _to_ticks(s, parse_single_int=False) -> Iterable[Scalar]:
+def _to_ticks(s, parse_single_int=False) -> np.ndarray:
     r"""
     Make a (list of) value(s) usable as the collection of labels for an Axis (ie hashable).
 
