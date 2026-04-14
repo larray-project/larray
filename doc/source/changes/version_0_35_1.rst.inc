@@ -70,3 +70,7 @@ Fixes
   (closes :issue:`1166`).
 
 * fixed `sequence()` when both `inc` and `mult` are defined.
+
+* fixed taking the subset of an Axis with mixed type labels (or of an Array
+  using such an axis) when specifying the labels as a numpy array
+  (closes :issue:`1194`).

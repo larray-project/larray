@@ -244,6 +244,8 @@ class Axis(ABCAxis):
 
     def _update_key_values(self) -> Tuple[np.ndarray, np.ndarray]:
         mapping = self._mapping
+        assert self.dtype.kind != 'O', ("Axis with object dtype should not use "
+                                        "the sorted_keys/values code path")
         if mapping:
             sorted_keys, sorted_values = tuple(zip(*sorted(mapping.items())))
         else:
@@ -1100,7 +1102,10 @@ class Axis(ABCAxis):
             # stop is inclusive in the input key and exclusive in the output !
             stop = mapping[key.stop] + 1 if key.stop is not None else None
             return slice(start, stop, key.step)
-        elif isinstance(key, (tuple, list, OrderedSet)):
+        elif (isinstance(key, (tuple, list, OrderedSet)) or
+              # object axis labels can contain mixed-types and those are not
+              # supported by the array_lookup2 code path
+              (isinstance(key, np.ndarray) and self.dtype.kind == 'O')):
             # TODO: the result should be cached
             # Note that this is faster than array_lookup(np.array(key), mapping)
             res = np.empty(len(key), int)
