@@ -334,10 +334,6 @@ def _can_have_groups(seq) -> bool:
     return _is_object_array(seq) or isinstance(seq, (tuple, list))
 
 
-def _contain_group_ticks(ticks) -> bool:
-    return _can_have_groups(ticks) and any(isinstance(tick, Group) for tick in ticks)
-
-
 def _seq_group_to_name(seq) -> Sequence[Any]:
     if _can_have_groups(seq):
         return [v.name if isinstance(v, Group) else v for v in seq]
