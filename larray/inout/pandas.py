@@ -59,6 +59,10 @@ def simple_index_to_labels(idx: pd.Index, sort=True, keep_object=True) -> np.nda
             labels = idx.to_numpy()
         else:
             labels = np.asarray(idx.to_list())
+    # this is a bug introduced on purpose to keep backward compatibility
+    # (see issue #1187)
+    if isinstance(idx, pd.DatetimeIndex):
+        labels = labels.astype(str)
     return labels
 
 
