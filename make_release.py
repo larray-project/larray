@@ -44,10 +44,11 @@ def update_metapackage(local_repository, release_name, public_release=True, **ex
                  f"Please update the release script")
     # TODO: this should be echocall(redirect_stdout=False)
     print(f'Updating larrayenv metapackage to version {version}')
+    # See https://peps.python.org/pep-0440/#version-specifiers for the syntax
     dependencies = [
         f'larray =={version}', f'larray-editor =={version}', f'larray_eurostat =={version}',
         'pandas <3', 'numpy <2.4',
-        'qtconsole', 'matplotlib', 'pyqt', 'qtpy', 'pytables', 'pydantic ==2',
+        'qtconsole', 'matplotlib', 'pyqt', 'qtpy', 'pytables', 'pydantic ==2.*',
         'xlsxwriter', 'xlrd', 'openpyxl', 'xlwings',
     ]
     check_call([
