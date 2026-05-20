@@ -108,7 +108,7 @@ def concat(arrays, axis=0, dtype=None):
 
     # switch to object dtype if labels are of incompatible types, so that we do not implicitly convert numeric types to
     # strings (numpy should not do this in the first place but that is another story). This can happen for example when
-    # we want to add a "total" tick to a numeric axis (eg age).
+    # we want to add a "total" tick to a numeric axis (e.g. age).
     combined_axis = Axis(concatenate_ndarrays(arrays_labels), name)
 
     # combine all axes (using labels from any side if any)
@@ -1409,7 +1409,7 @@ class Array(ABCArray):
 
     # def __array_prepare__(self, arr, context=None):
     #     """
-    #     called before ufuncs (must return an ndarray)
+    #     called before ufuncs (must return a ndarray)
     #     """
     #     return np.ndarray.__array_prepare__(self.data, arr, context)
 
@@ -1702,7 +1702,7 @@ class Array(ABCArray):
     def align(self, *other, join='outer', fill_value=nan, axes=None) -> Tuple['Array', 'Array']:
         r"""Align array with other(s) on their axes with the specified join method.
 
-        In other words, it ensure all common axes are compatible. Those arrays can then be used in binary operations.
+        In other words, it ensures all common axes are compatible. Those arrays can then be used in binary operations.
 
         Parameters
         ----------
@@ -2091,7 +2091,7 @@ class Array(ABCArray):
             value_type = value.dtype
         # We do not handle Iterable here because np.(as)array does
         # not handle (iterate on) them.
-        # strings are Sequence but we do not want to convert them to arrays
+        # strings are Sequence, but we do not want to convert them to arrays
         elif (isinstance(value, Sequence) and
               not isinstance(value, (bytes, str))):
             value = np.asarray(value)
@@ -2744,7 +2744,7 @@ class Array(ABCArray):
                 if res_data.ndim == 1:
                     assert len(idx) == 1 and idx[0] == i
 
-                    # res_data[idx] but instead of returning a scalar (eg np.int32), it returns a 0d array which is a
+                    # res_data[idx] but instead of returning a scalar (e.g. np.int32), it returns a 0d array which is a
                     # view on res_data, which can thus be used as out
                     out = res_data[i:i + 1].reshape(())
                 else:
@@ -2759,9 +2759,9 @@ class Array(ABCArray):
                 res_data = res_data[idx]
                 del res_axes[axis_idx]
             else:
-                # We do NOT modify the axis name (eg append "_agg" or "*") even though this creates a new axis that is
-                # independent from the original one because the original name is what users will want to use to access
-                # that axis (eg in .filter kwargs)
+                # We do NOT modify the axis name (e.g. append "_agg" or "*") even though this creates a new axis that is
+                # independent of the original one because the original name is what users will want to use to access
+                # that axis (e.g. in .filter kwargs)
                 res_axes[axis_idx] = Axis(groups, res_axis.name)
 
             if isinstance(res_data, np.ndarray):
@@ -2868,7 +2868,7 @@ class Array(ABCArray):
     def with_total(self, *args, op=sum, label='total', **kwargs) -> 'Array':
         r"""Add aggregated values (sum by default) along each axis.
 
-        A user defined label can be given to specified the computed values.
+        A user defined label can be given to specify the computed values.
 
         Parameters
         ----------
@@ -7497,7 +7497,7 @@ class Array(ABCArray):
 
         See Also
         --------
-        Array.roll : cells which are pushed "outside of the axis" are reintroduced on the opposite side of the axis
+        Array.roll : cells which are pushed "outside the axis" are reintroduced on the opposite side of the axis
                       instead of being dropped.
 
         Examples
@@ -7525,7 +7525,7 @@ class Array(ABCArray):
             return self[:]
 
     def roll(self, axis=None, n=1) -> 'Array':
-        r"""Roll the cells of the array n-times to the right along axis. Cells which would be pushed "outside of the
+        r"""Roll the cells of the array n-times to the right along axis. Cells which would be pushed "outside the
         axis" are reintroduced on the opposite side of the axis.
 
         Parameters
@@ -7542,7 +7542,7 @@ class Array(ABCArray):
 
         See Also
         --------
-        Array.shift : cells which are pushed "outside of the axis" are dropped instead of being reintroduced on the
+        Array.shift : cells which are pushed "outside the axis" are dropped instead of being reintroduced on the
                        opposite side of the axis.
 
         Examples
@@ -7596,7 +7596,7 @@ class Array(ABCArray):
         d : int, optional
             Periods to shift for forming difference. Defaults to 1.
         n : int, optional
-            The number of times values are differenced. Defaults to 1.
+            The number of times values are "differenced". Defaults to 1.
         label : {'lower', 'upper'}, optional
             The new labels in `axis` will have the labels of either the array being subtracted ('lower') or the array
             it is subtracted from ('upper'). Defaults to 'upper'.
@@ -9613,7 +9613,7 @@ def stack(elements=None, axes=None, title=None, meta=None, dtype=None, res_axes=
     else:
         if res_axes is None or dtype is None:
             values = [asarray(v) if not np.isscalar(v) else v
-                      for k, v in items]
+                      for _, v in items]
 
             if res_axes is None:
                 # XXX: with the current semantics of stack, we need to compute the union of axes for values but axis
