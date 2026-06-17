@@ -7371,7 +7371,6 @@ class Array(ABCArray):
 
     __array_priority__ = 100
 
-    # TODO: this should be a thin wrapper around a method in AxisCollection
     def set_labels(self, axis=None, labels=None, inplace=False, **kwargs) -> 'Array':
         r"""Replace the labels of one or several axes of the array.
 
