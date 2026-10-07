@@ -56,3 +56,9 @@ Fixes
 ^^^^^
 
 * fixed something (closes :issue:`1`).
+
+
+Dependencies
+^^^^^^^^^^^^
+
+* larray now requires numpy >= X.Y (instead of >= A.B).
