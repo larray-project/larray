@@ -37,12 +37,10 @@ license = 'GPL-3.0-only'
 license-files = ["LICENSE"]
 
 requires-python = ">=3.9"
+# lowest versions the test suite is known to pass with
 dependencies = [
-    "numpy >= 1.22",
-    # pandas >= 0.20.0 is required since commit
-    # 01669f2024a7bffe47cceec0a0fd845f71b6f7cc
-    # (issue 702 : fixed bug when writing metadata using HDF format)
-    "pandas >= 0.20.0",
+    "numpy >= 1.25",
+    "pandas >= 2.0.3",
 ]
 
 [project.optional-dependencies]

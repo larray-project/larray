@@ -74,8 +74,8 @@ Required Dependencies
 ---------------------
 
 - Python 3.9, 3.10, 3.11, 3.12, 3.13 or 3.14
-- `numpy <http://www.numpy.org/>`__ (1.22 or later)
-- `pandas <http://pandas.pydata.org/>`__ (0.20 or later)
+- `numpy <http://www.numpy.org/>`__ (1.25 or later)
+- `pandas <http://pandas.pydata.org/>`__ (2.0.3 or later)
 
 
 Optional Dependencies
