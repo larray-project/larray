@@ -10,6 +10,10 @@ Miscellaneous improvements
 Fixes
 ^^^^^
 
+* fixed importing larray when pydantic 1.x is installed. Only CheckedArray,
+  CheckedSession and CheckedParameters require pydantic (>= 2). This was a
+  regression in larray 0.35.0.
+
 * fixed setting a subset of an array with an array with the same shape but
   only anonymous wildcard axes, such as one created from a numpy array
   (e.g. ``Array(ndarray)``) or by calling ``.astype()`` on an Excel range

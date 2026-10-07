@@ -1,5 +1,9 @@
+import os
 import pickle
+import subprocess
+import sys
 import warnings
+from pathlib import Path
 
 import pytest
 try:
@@ -8,6 +12,7 @@ except ImportError:
     pytest.skip("pydantic is required for testing Checked* classes", allow_module_level=True)
 import numpy as np
 
+import larray
 from larray import (CheckedSession, CheckedArray, Axis, AxisCollection, Group, Array,
                     ndtest, full, full_like, zeros_like, ones, ones_like, isnan)
 from larray.tests.common import (inputpath, assert_array_nan_equal, meta,                           # noqa: F401
@@ -798,6 +803,26 @@ def test_checked_class_with_methods():
     cs = CheckedSessionWithMethods(arr=array)
     assert cs.new_method()
     assert cs.new_property == "property value"
+
+
+def test_import_with_pydantic_1(tmp_path):
+    # larray must stay importable when an unsupported pydantic version is installed
+    fake_pydantic_dir = tmp_path / 'pydantic'
+    fake_pydantic_dir.mkdir()
+    (fake_pydantic_dir / '__init__.py').write_text("VERSION = '1.10.0'\n")
+    larray_root = Path(larray.__file__).parent.parent
+    env = dict(os.environ, PYTHONPATH=os.pathsep.join([str(tmp_path), str(larray_root)]))
+    code = """
+import larray
+try:
+    larray.CheckedSession()
+except NotImplementedError as e:
+    print(e)
+"""
+    res = subprocess.run([sys.executable, '-c', code], env=env, capture_output=True, text=True,
+                         check=True)
+    assert res.stdout.strip() == ("CheckedSession class cannot be instantiated because pydantic "
+                                  "(>= 2) is not installed")
 
 
 if __name__ == "__main__":
