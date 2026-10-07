@@ -42,7 +42,7 @@ class CheckedSessionExample(CheckedSession):
     e: Array
     g: Array
     f: CheckedArray((Axis(3), Axis(2)))
-    h: CheckedArray((a3, b2), dtype=int)
+    h: CheckedArray((a3, b2), dtype=np.int64)
 
 
 @pytest.fixture()

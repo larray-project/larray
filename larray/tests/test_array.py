@@ -1692,7 +1692,7 @@ def test_setitem_scalar():
     # c) one cell and unsafe type
     arr = array.copy()
     msg = UNSAFE_CAST_WARNING_TEMPLATE.format(
-        expected_dtype='int64',
+        expected_dtype=arr.dtype,
         value_dtype='float'
     )
     with must_warn(FutureWarning, msg):
