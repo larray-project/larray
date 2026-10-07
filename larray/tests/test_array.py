@@ -1626,6 +1626,17 @@ def test_setitem_ndarray(array):
     assert_nparray_equal(arr.data, raw)
 
 
+def test_setitem_anonymous_wildcard_value():
+    # issue #1202
+    arr = ndtest((2, 3))
+    arr[:] = Array([[10, 11, 12],
+                    [13, 14, 15]])
+    expected = from_string(r"""a\b  b0  b1  b2
+                                a0  10  11  12
+                                a1  13  14  15""")
+    assert_larray_equal(arr, expected)
+
+
 def test_setitem_scalar():
     """
     Test Array.__setitem__(key, value) where value is a scalar.
@@ -3052,6 +3063,16 @@ def test_broadcasting_no_name():
 
     with must_raise(ValueError, "operands could not be broadcast together with shapes (2,3) (2,) "):
         np.asarray(a) * np.asarray(c)
+
+
+def test_binary_ops_anonymous_wildcard_same_shape():
+    arr = ndtest((2, 3))
+    res = arr + Array([[10, 20, 30],
+                       [40, 50, 60]])
+    expected = from_string(r"""a\b  b0  b1  b2
+                                a0  10  21  32
+                                a1  43  54  65""")
+    assert_larray_equal(res, expected)
 
 
 def test_binary_ops_with_scalar_group():

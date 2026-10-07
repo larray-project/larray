@@ -2293,6 +2293,11 @@ class Array(ABCArray):
                 target_axes = AxisCollection(target_axes)
         if self.axes == target_axes:
             return self
+        # an array with only anonymous wildcard axes and exactly the target shape carries no more
+        # information than its shape, so its axes are matched positionally
+        if (all(axis.name is None and axis.iswildcard for axis in self.axes) and
+                self.shape == tuple(len(axis) for axis in target_axes)):
+            return self.set_axes(target_axes)
         # determine real target order (= left_only then target_axes)
         # (we will add length one axes to the left like numpy just below)
         target_axes = (self.axes - target_axes) | target_axes
