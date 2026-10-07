@@ -34,7 +34,8 @@ from larray import Array, isnan, asarray, Metadata
 
 
 NUMPY2 = NumpyVersion(np.__version__) >= '2.0.0'
-NUMPY24 = NumpyVersion(np.__version__) >= '2.4.0'
+# numpy 2.4.0 to 2.4.4 emit a deprecation warning when unpickling old dtypes
+NUMPY_WARNS_ON_OLD_PICKLED_DTYPES = '2.4.0' <= NumpyVersion(np.__version__) < '2.4.5'
 SKIP_EXCEL_TESTS = False
 TESTDATADIR = Path(__file__).parent
 

@@ -12,7 +12,7 @@ from larray.tests.common import (
     assert_nparray_equal, assert_nparray_nan_equal,
     needs_xlwings, needs_pytables, needs_xlsxwriter, needs_openpyxl,
     needs_matplotlib,
-    NUMPY2, NUMPY24,
+    NUMPY2, NUMPY_WARNS_ON_OLD_PICKLED_DTYPES,
     must_warn, must_raise
 )
 from larray import (
@@ -3910,8 +3910,8 @@ def test_hdf_roundtrip(tmp_path, meta):
     msg = (f"'{fpath}' was created with an old version of NumPy. Please "
            "rewrite the file with a recent version of NumPy to avoid future "
            "compatibility issues.")
-    # if we do not use numpy >= 2.4, the warning is not triggered
-    num_expected = int(NUMPY24)
+    # the warning is only triggered for numpy versions emitting the original warning
+    num_expected = int(NUMPY_WARNS_ON_OLD_PICKLED_DTYPES)
     with must_warn(FutureWarning, msg=msg, num_expected=num_expected):
         _ = read_hdf(fpath, '__groups__/a01')
 

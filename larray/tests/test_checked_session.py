@@ -12,7 +12,8 @@ from larray import (CheckedSession, CheckedArray, Axis, AxisCollection, Group, A
                     ndtest, full, full_like, zeros_like, ones, ones_like, isnan)
 from larray.tests.common import (inputpath, assert_array_nan_equal, meta,                           # noqa: F401
                                  needs_pytables, needs_openpyxl, needs_xlwings,
-                                 must_warn, must_raise, NUMPY24)
+                                 must_warn, must_raise,
+                                 NUMPY_WARNS_ON_OLD_PICKLED_DTYPES)
 from larray.tests.test_session import (a, a2, a3, anonymous, a01, ano01, b, b2, b024,               # noqa: F401
                                        c, d, e, f, g, h,
                                        assert_seq_equal, session, test_getitem, test_getattr,
@@ -162,8 +163,8 @@ def test_init_checkedsession_hdf():
 
     # check_file is False because the warning stack level is calibrated for
     # Session and not CheckedSession which uses a Session
-    # if we do not use numpy >= 2.4, the warning is not triggered
-    num_expected = int(NUMPY24)
+    # the warning is only triggered for numpy versions emitting the original warning
+    num_expected = int(NUMPY_WARNS_ON_OLD_PICKLED_DTYPES)
     with must_warn(FutureWarning, msg=msg, check_file=False,
                    num_expected=num_expected):
         cs = CheckedSessionExample(fpath)
