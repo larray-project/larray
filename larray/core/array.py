@@ -2092,8 +2092,9 @@ class Array(ABCArray):
         # We do not handle Iterable here because np.(as)array does
         # not handle (iterate on) them.
         # strings are Sequence, but we do not want to convert them to arrays
-        elif (isinstance(value, Sequence) and
-              not isinstance(value, (bytes, str))):
+        elif ((isinstance(value, Sequence) and
+               not isinstance(value, (bytes, str))) or
+              hasattr(value, '__array__')):
             value = np.asarray(value)
             value_type = value.dtype
         else:
