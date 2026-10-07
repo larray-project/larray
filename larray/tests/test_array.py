@@ -1198,6 +1198,16 @@ def test_getitem_multiple_larray_key_guess():
     assert_larray_equal(arr[k1, k2], expected)
 
 
+def test_getitem_nd_larray_key_guess_object_axis():
+    # issue #1203
+    a = Axis('a=a0').astype(object)
+    b = Axis('b=b0,b1')
+    c, d = Axis('c=c0'), Axis('d=d0')
+    arr = ndtest((a, b))
+    key = full((c, d), 'b1')
+    assert_larray_equal(arr[key], full((a, c, d), 1))
+
+
 def test_getitem_ndarray_key_guess(array):
     raw = array.data
     keys = ['d4', 'd1', 'd3', 'd2']

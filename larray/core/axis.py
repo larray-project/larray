@@ -1106,6 +1106,8 @@ class Axis(ABCAxis):
               # object axis labels can contain mixed-types and those are not
               # supported by the array_lookup2 code path
               (isinstance(key, np.ndarray) and self.dtype.kind == 'O')):
+            if isinstance(key, np.ndarray) and key.ndim > 1:
+                return self.index(key.ravel()).reshape(key.shape)
             # TODO: the result should be cached
             # Note that this is faster than array_lookup(np.array(key), mapping)
             res = np.empty(len(key), int)
