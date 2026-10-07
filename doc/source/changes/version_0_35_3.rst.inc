@@ -13,6 +13,11 @@ Fixes
   same shape as the left one but only anonymous wildcard axes
   (see :issue:`1202`).
 
+* fixed the warning emitted when setting a subset of an array with a value
+  which can be converted to a numpy array (e.g. an Excel range) but is not one
+  already. It mentioned the type of the value (e.g. "Range dtype") instead of
+  the dtype of its data, even if converting it was safe (see :issue:`1202`).
+
 * fixed indexing an array which has an axis with the object dtype using an
   array key with more than one dimension (closes :issue:`1203`).
   This was a regression in larray 0.35.1.

@@ -1637,6 +1637,33 @@ def test_setitem_anonymous_wildcard_value():
     assert_larray_equal(arr, expected)
 
 
+def test_setitem_array_like_value():
+    # issue #1202
+    class ArrayLike:
+        def __init__(self, data):
+            self.data = data
+
+        def __array__(self, dtype=None, copy=None):
+            return np.array(self.data, dtype=dtype)
+
+    # a) same dtype => no warning
+    arr = ndtest(2)
+    arr[:] = ArrayLike([2, 3])
+    assert_larray_equal(arr, from_string("""a  a0  a1
+                                           \t   2   3"""))
+
+    # b) unsafe type => the warning mentions the dtype of the converted value
+    arr = ndtest(2)
+    msg = UNSAFE_CAST_WARNING_TEMPLATE.format(
+        expected_dtype=arr.dtype,
+        value_dtype='float64'
+    )
+    with must_warn(FutureWarning, msg):
+        arr[:] = ArrayLike([2.5, 3.5])
+    assert_larray_equal(arr, from_string("""a  a0  a1
+                                           \t   2   3"""))
+
+
 def test_setitem_scalar():
     """
     Test Array.__setitem__(key, value) where value is a scalar.
