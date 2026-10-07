@@ -6,6 +6,9 @@ Miscellaneous improvements
 
 * the larrayenv metapackage now allows pandas 3.0 and numpy 2.4 and 2.5.
 
+* larray now declares that it requires numpy >= 1.25 and pandas >= 2.0.3, instead
+  of numpy >= 1.22 and pandas >= 0.20 (which were no longer supported).
+
 
 Fixes
 ^^^^^
