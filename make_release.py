@@ -38,16 +38,16 @@ def update_metapackage(local_repository, release_name, public_release=True, **ex
     chdir(local_repository)
     version = short(release_name)
 
-    hardcoded_version = '0.35.2'
+    hardcoded_version = '0.35.3'
     if version != hardcoded_version:
-        sys.exit("The release script added dependencies specific to 0.35.2"
+        sys.exit(f"The release script added dependencies specific to {hardcoded_version}. "
                  "Please update the release script")
     # TODO: this should be echocall(redirect_stdout=False)
     print(f'Updating larrayenv metapackage to version {version}')
     # See https://peps.python.org/pep-0440/#version-specifiers for the syntax
     dependencies = [
         f'larray =={version}', f'larray-editor =={version}', f'larray_eurostat =={version}',
-        'pandas <3', 'numpy <2.4',
+        'pandas <3.1', 'numpy <2.6',
         'qtconsole', 'matplotlib', 'pyqt', 'qtpy', 'pytables', 'pydantic ==2.*',
         'xlsxwriter', 'xlrd', 'openpyxl', 'xlwings',
     ]

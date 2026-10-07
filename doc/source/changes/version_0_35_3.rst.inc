@@ -1,6 +1,12 @@
 ﻿.. py:currentmodule:: larray
 
 
+Miscellaneous improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* the larrayenv metapackage now allows pandas 3.0 and numpy 2.4 and 2.5.
+
+
 Fixes
 ^^^^^
 
