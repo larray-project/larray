@@ -1,15 +1,6 @@
 ﻿.. py:currentmodule:: larray
 
 
-Miscellaneous improvements
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-* the larrayenv metapackage now allows pandas 3.0 and numpy 2.4 and 2.5.
-
-* larray now declares that it requires numpy >= 1.25 and pandas >= 2.0.3, instead
-  of numpy >= 1.22 and pandas >= 0.20 (which were no longer supported).
-
-
 Fixes
 ^^^^^
 
@@ -34,3 +25,12 @@ Fixes
 * fixed indexing an array which has an axis with the object dtype using an
   array key with more than one dimension (closes :issue:`1203`).
   This was a regression in larray 0.35.1.
+
+
+Dependencies
+^^^^^^^^^^^^
+
+* the larrayenv metapackage now allows pandas 3.0 and numpy 2.4 and 2.5.
+
+* larray now requires numpy >= 1.25 and pandas >= 2.0.3. Earlier versions did
+  not work anyway.
