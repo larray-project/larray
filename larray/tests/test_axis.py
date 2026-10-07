@@ -145,6 +145,9 @@ def test_index():
     assert a.index(1) == 1
     # issue #1194
     assert a.index(np.array(['a0'])) == [0]
+    # issue #1203: N-D (object) array keys on an object axis
+    obj_key = np.array([['a0', 'a0'], [1, 'a0']], dtype=object)
+    assert_nparray_equal(a.index(obj_key), np.array([[0, 0], [1, 0]]))
 
 
 def test_astype():
