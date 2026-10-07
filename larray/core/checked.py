@@ -18,6 +18,9 @@ NOT_LOADED = NotLoaded()
 
 try:
     import pydantic
+    # the Checked* classes require pydantic >= 2
+    if int(pydantic.VERSION.split('.')[0]) < 2:
+        pydantic = None
 except ImportError:
     pydantic = None
 
@@ -27,17 +30,18 @@ except ImportError:
 # CheckedSession (imported from Session)
 if not pydantic:
     def CheckedArray(axes: AxisCollection, dtype: np.dtype = float) -> Type[Array]:
-        raise NotImplementedError("CheckedArray cannot be used because pydantic is not installed")
+        raise NotImplementedError("CheckedArray cannot be used because pydantic (>= 2) is not "
+                                  "installed")
 
     class CheckedSession:
         def __init__(self, *args, **kwargs):
             raise NotImplementedError("CheckedSession class cannot be instantiated "
-                                      "because pydantic is not installed")
+                                      "because pydantic (>= 2) is not installed")
 
     class CheckedParameters:
         def __init__(self, *args, **kwargs):
             raise NotImplementedError("CheckedParameters class cannot be instantiated "
-                                      "because pydantic is not installed")
+                                      "because pydantic (>= 2) is not installed")
 else:
     from pydantic import (
         ConfigDict, BeforeValidator, ValidationInfo, TypeAdapter,
