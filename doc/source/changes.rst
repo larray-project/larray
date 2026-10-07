@@ -1,6 +1,16 @@
 ﻿Change log
 ##########
 
+Version 0.35.3
+==============
+
+In development.
+
+CORE
+----
+.. include:: ./changes/version_0_35_3.rst.inc
+
+
 Version 0.35.2
 ==============
 
